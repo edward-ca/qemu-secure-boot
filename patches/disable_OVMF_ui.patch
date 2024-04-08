@@ -1,0 +1,11 @@
+--- tools/qemu-8.1.5/roms/edk2/OvmfPkg/OvmfPkgX64.orig.dsc	2024-04-05 21:31:12.598172279 +0000
++++ tools/qemu-8.1.5/roms/edk2/OvmfPkg/OvmfPkgX64.dsc	2024-04-05 21:31:18.318215945 +0000
+@@ -623,7 +623,7 @@
+   gUefiOvmfPkgTokenSpaceGuid.Pcd8259LegacyModeEdgeLevel|0x0E20
+ 
+   # Point to the MdeModulePkg/Application/UiApp/UiApp.inf
+-  gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xaa, 0x2c, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6e, 0x8a, 0xb6, 0xf4, 0x66, 0x23, 0x31 }
++  # gEfiMdeModulePkgTokenSpaceGuid.PcdBootManagerMenuFile|{ 0x21, 0xaa, 0x2c, 0x46, 0x14, 0x76, 0x03, 0x45, 0x83, 0x6e, 0x8a, 0xb6, 0xf4, 0x66, 0x23, 0x31 }
+ 
+ ################################################################################
+ #
