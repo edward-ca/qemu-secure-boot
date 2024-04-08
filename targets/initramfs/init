@@ -1,0 +1,53 @@
+#!/bin/sh
+die(){
+  echo "$1"
+
+  /bin/sh -i
+  echo "Powering off..."
+  echo 1 > /proc/sys/kernel/sysrq
+  echo o > /proc/sysrq-trigger
+  sleep 5
+  exit 1
+}
+
+reset
+echo ">>> Running Initramfs /init"
+mount -t proc none /proc || die "failed to mount /proc"
+mount -t sysfs sysfs /sys || die "failed to mount /sys"
+mkdir -p /var/ || die "failed to mkdir /var"
+mount -t tmpfs none /var || die "failed to mount /var as tmpfs"
+
+mount -t devtmpfs -o mode=0755 udev /dev || die "failed to mount /var as tmpfs"
+
+# Ensure efivars is mounted for Secure Boot check
+if ! mount | grep -q efivarfs; then
+  mount -t efivarfs efivarfs /sys/firmware/efi/efivars || die "failed to mount efivars"
+fi
+
+# Check Secure Boot Status
+secure_boot_status=$(od -An -t u1 /sys/firmware/efi/efivars/SecureBoot-* 2>/dev/null | awk 'NR==1 {print $NF}')
+if [[ $secure_boot_status -eq 1 ]]; then
+	dmesg  | grep -i secure
+	echo ">>> Secure Boot is enabled."
+else
+	die ">>> Secure Boot is NOT enabled."
+fi
+
+# Extract root_hash from the kernel command line
+for param in $(cat /proc/cmdline); do
+  case "${param}" in
+    root_hash=*)
+      root_hash="${param#root_hash=}"
+    ;;
+  esac
+done
+
+/sbin/veritysetup create rootfs  /dev/vda /dev/vdb "${root_hash}" || die "veritysetup failed"
+
+dmesg | grep -i verity
+
+echo ">>> Mounted  verity backed parition"
+mkdir /newroot || die "failed to mkdir /newroot"
+
+mount -o ro /dev/mapper/rootfs /newroot || die "failed to mount /newroot"
+exec switch_root /newroot /sbin/init

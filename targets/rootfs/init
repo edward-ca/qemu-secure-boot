@@ -1,0 +1,32 @@
+#!/bin/sh
+
+die()
+{
+  set +x
+  echo "$(basename "$0"): $1"
+  exit 1
+}
+
+echo "Running verity partition /sbin/init"
+
+mount -t proc none /proc || die "failed to mount /proc"
+
+# Prompt user
+echo "Press any key to enter an interactive shell. Continuing in 5 seconds otherwise..."
+
+# Set a time limit for read (5 seconds)
+# shellcheck disable=3045
+# Allow non-posix use of `read`
+if read -r -n 1 -t 5; then
+    printf "\nEntering interactive shell..."
+    sh -i
+else
+    printf "\nContinuing with the script..."
+fi
+
+# Power off the system
+echo "Powering off..."
+echo 1 > /proc/sys/kernel/sysrq
+echo o > /proc/sysrq-trigger
+sleep 5
+

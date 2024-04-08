@@ -1,0 +1,108 @@
+name: CI
+
+# Trigger the workflow on push or pull request
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            autoconf \
+            autogen \
+            bc \
+            bison \
+            build-essential \
+            busybox \
+            ccache \
+            cpio \
+            cryptsetup \
+            curl \
+            fakeroot \
+            findutils \
+            flex \
+            gettext autopoint \
+            git \
+            gnu-efi \
+            gnupg2\
+            gpg \
+            grub-efi-amd64-signed \
+            grub2 \
+            help2man \
+            iasl \
+            libelf-dev \
+            libfdt-dev \
+            libglib2.0-dev \
+            libgtk-3-dev \
+            libncurses5-dev \
+            libpixman-1-dev \
+            libsdl2-dev \
+            libssl-dev \
+            libtool \
+            libvte-2.91-dev \
+            meson \
+            nasm \
+            ninja-build \
+            openssl \
+            pkg-config \
+            python3 \
+            python3-distutils \
+            python3-pip \
+            python3-setuptools \
+            python3-venv \
+            qemu-system \
+            sbsigntool \
+            shtool \
+            sudo \
+            uuid-dev \
+            uuid-runtime \
+            wget \
+            zlib1g-dev \
+
+        sudo cpan install File::Slurp
+
+    # Running Makefile command inside the Docker container
+    - name: Download qemu tarball
+      run: |
+        mkdir -p build/tools
+        make -C targets/qemu
+
+    - name: Build OVMF
+      run: |
+        make -C targets/ovmf
+
+    - name: Build EFITools
+      run: |
+        make -C targets/efitools
+
+    - name: Lockdown
+      run: |
+        make -C targets/lockdown
+
+    - name: Download Busybox
+      run: |
+        make -C targets/busybox
+
+    - name: Build rootfs (with verity)
+      run: |
+        make -C targets/rootfs
+
+    - name: Build initramfs
+      run: |
+        make -C targets/initramfs
+
+    - name: Build kernel
+      run: |
+        make -C targets/linux
+
+    - name: Run Secure Boot
+      run: |
+        bin/run-secure-boot.sh
